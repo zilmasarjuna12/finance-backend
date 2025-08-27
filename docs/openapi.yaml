@@ -1,0 +1,854 @@
+openapi: 3.0.0
+x-stoplight:
+  id: q735wa9dgllbc
+servers:
+  - url: example.com
+info:
+  contact:
+    name: Jon
+  version: 1.0.0
+  title: Finance API
+  description: ''
+tags:
+  - name: Health
+  - name: Auth
+  - name: User
+  - name: Wallet
+  - name: Budget
+  - name: Transaction
+paths:
+  /heatlh:
+    get:
+      tags:
+        - Health
+      operationId: getHealth
+      security: []
+      responses:
+        '200':
+          description: Service is up
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+              examples:
+                ok:
+                  value:
+                    status: ok
+                    time: '2025-08-22T12:00:00Z'
+      x-stoplight:
+        id: l4gbqlv9ottaj
+  /v1/auth/login:
+    post:
+      tags:
+        - Auth
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: john_doe
+                  x-stoplight:
+                    id: 8596g20g4vmi9
+                password:
+                  type: string
+                  example: securepassword123
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              example:
+                success: true
+                message: Success
+                data:
+                  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                  expires_at: 1712345678
+                  user:
+                    id: '12345'
+                    full_name: John Doe
+                    email: john_doe@example.com
+                    created_at: 1712345678
+                    updated_at: 1712345678
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Invalid request
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Unauthorized
+      x-stoplight:
+        id: iew8knukrj67q
+  /v1/auth/register:
+    post:
+      tags:
+        - Auth
+      operationId: register
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                full_name:
+                  type: string
+                  example: John Doe
+                email:
+                  type: string
+                  format: email
+                  example: john_doe@example.com
+                password:
+                  type: string
+                  format: password
+                  example: securepassword123
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              example:
+                success: true
+                message: User registered successfully
+                data:
+                  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                  expires_at: 1712345678
+                  user:
+                    id: '12345'
+                    full_name: John Doe
+                    email: john_doe@example.com
+                    created_at: 1712345678
+                    updated_at: 1712345678
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Invalid request
+        '409':
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Email already exists
+      x-stoplight:
+        id: fkgf6igwwr0qw
+  /v1/me:
+    get:
+      tags:
+        - User
+      operationId: getMe
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Authenticated user details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: User details retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: '12345'
+                      full_name:
+                        type: string
+                        example: John Doe
+                      email:
+                        type: string
+                        example: john_doe@example.com
+                      created_at:
+                        type: number
+                        format: int64
+                        example: 1712345678
+                      updated_at:
+                        type: number
+                        format: int64
+                        example: 1712345678
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Unauthorized
+      x-stoplight:
+        id: 9p1v6x7y2z3w4
+  /v1/wallet:
+    post:
+      tags:
+        - Wallet
+      operationId: createWallet
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: My Wallet
+                type:
+                  type: string
+                  example: 'ovo, dana, gopay, bank-bca, bank-bni, bank-mandiri, bank-bri, bank-cimb, bank-btpn'
+                currency:
+                  enum:
+                    - USD
+                    - IDR
+                  example: IDR
+                balance:
+                  type: number
+                  format: float
+                  example: 1000
+      responses:
+        '201':
+          description: Wallet created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Wallet created successfully
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        example: 123e4567-e89b-12d3-a456-426614174000
+                      type:
+                        type: string
+                        example: ovo
+                      name:
+                        type: string
+                        example: My Wallet
+                      currency:
+                        type: string
+                        example: USD
+                      balance:
+                        type: number
+                        format: float
+                        example: 1000
+                      created_at:
+                        type: integer
+                        format: int64
+                        example: 1712345678
+                      updated_at:
+                        type: integer
+                        format: int64
+                        example: 1712345678
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Invalid request
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Unauthorized
+      x-stoplight:
+        id: 5hey328bl8813
+    get:
+      tags:
+        - Wallet
+      operationId: getWallets
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of wallets
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Wallets retrieved successfully
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                          example: 123e4567-e89b-12d3-a456-426614174000
+                        type:
+                          type: string
+                          example: ovo
+                        name:
+                          type: string
+                          example: My Wallet
+                        currency:
+                          type: string
+                          example: USD
+                        balance:
+                          type: number
+                          format: float
+                          example: 1000
+                        created_at:
+                          type: integer
+                          format: int64
+                          example: 1712345678
+                        updated_at:
+                          type: integer
+                          format: int64
+                          example: 1712345678
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Unauthorized
+        '404':
+          description: No wallets found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: No wallets found
+      x-stoplight:
+        id: dw7odhqpc0a8p
+  /v1/budget:
+    post:
+      tags:
+        - Budget
+      operationId: createBudget
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Food Budget
+                amount:
+                  type: number
+                  format: float
+                  example: 5000
+                type:
+                  type: string
+                  enum:
+                    - income
+                    - expense
+                  example: income
+                category:
+                  type: string
+                  enum:
+                    - salary
+                    - investment
+                    - savings
+                    - bills
+                    - entertainment
+                  example: salary
+      responses:
+        '201':
+          description: Budget created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Budget created successfully
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Invalid request
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Unauthorized
+      x-stoplight:
+        id: 5emd8unk8f69m
+    get:
+      tags:
+        - Budget
+      operationId: getBudgets
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of budgets
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Budgets retrieved successfully
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                          example: 123e4567-e89b-12d3-a456-426614174000
+                        name:
+                          type: string
+                          example: Monthly Budget
+                        amount:
+                          type: number
+                          format: float
+                          example: 5000
+                        type:
+                          type: string
+                          enum:
+                            - income
+                            - expense
+                          example: income
+                        category:
+                          type: string
+                          enum:
+                            - salary
+                            - investment
+                            - savings
+                            - bills
+                            - entertainment
+                          example: salary
+                        created_at:
+                          type: integer
+                          format: int64
+                          example: 1712345678
+                        updated_at:
+                          type: integer
+                          format: int64
+                          example: 1712345678
+      x-stoplight:
+        id: vatskah16v4so
+  /v1/transaction:
+    post:
+      tags:
+        - Transaction
+      operationId: createTransaction
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                wallet_id:
+                  type: string
+                  format: uuid
+                  example: 123e4567-e89b-12d3-a456-426614174000
+                amount:
+                  type: number
+                  format: float
+                  example: 150.75
+                type:
+                  type: string
+                  enum:
+                    - income
+                    - expense
+                  example: expense
+                category:
+                  type: string
+                  enum:
+                    - salary
+                    - investment
+                    - savings
+                    - bills
+                    - entertainment
+                  example: entertainment
+                note:
+                  type: string
+                  example: Dinner at a restaurant
+                transcation_date:
+                  type: integer
+                  format: int64
+                  example: 1712345678
+      responses:
+        '201':
+          description: Transaction created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Transaction created successfully
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        example: 123e4567-e89b-12d3-a456-426614174000
+                      wallet_id:
+                        type: string
+                        format: uuid
+                        example: 123e4567-e89b-12d3-a456-426614174000
+                      amount:
+                        type: number
+                        format: float
+                        example: 150.75
+                      type:
+                        type: string
+                        enum:
+                          - income
+                          - expense
+                        example: expense
+                      category:
+                        type: string
+                        enum:
+                          - salary
+                          - investment
+                          - savings
+                          - bills
+                          - entertainment
+                        example: entertainment
+                      note:
+                        type: string
+                        example: Dinner at a restaurant
+                      transcation_date:
+                        type: integer
+                        format: int64
+                        example: 1712345678
+                      created_at:
+                        type: integer
+                        format: int64
+                        example: 1712345678
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Invalid request
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Unauthorized
+      x-stoplight:
+        id: 1tslak2b3r4fe
+    get:
+      tags:
+        - Transaction
+      operationId: getTransactions
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Transactions retrieved successfully
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                          example: 123e4567-e89b-12d3-a456-426614174000
+                        wallet:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                              example: a1aea7ec-57f8-4b95-b6c4-77cff913ce8b
+                            name:
+                              type: string
+                              example: My Wallet
+                            type:
+                              type: string
+                              example: ovo
+                            currency:
+                              type: string
+                              example: USD
+                            balance:
+                              type: number
+                              format: float
+                              example: 1000
+                        amount:
+                          type: number
+                          format: float
+                          example: 150.75
+                        type:
+                          type: string
+                          enum:
+                            - income
+                            - expense
+                          example: expense
+                        category:
+                          type: string
+                          enum:
+                            - salary
+                            - investment
+                            - savings
+                            - bills
+                            - entertainment
+                          example: entertainment
+                        note:
+                          type: string
+                          example: Dinner at a restaurant
+                        transcation_date:
+                          type: integer
+                          format: int64
+                          example: 1712345678
+                        created_at:
+                          type: integer
+                          format: int64
+                          example: 1712345678
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Unauthorized
+        '404':
+          description: No transactions found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: No transactions found
+      x-stoplight:
+        id: gom2ftfn79mfv
+components:
+  schemas:
+    Health:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+        time:
+          type: string
+          format: date-time
+      x-stoplight:
+        id: uptageqx6be4j
+    LoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Indicates if the operation was successful
+          example: true
+        message:
+          type: string
+          description: Response message
+          example: Success
+        data:
+          type: object
+          properties:
+            token:
+              type: string
+              description: JWT token for authenticated user
+              example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+            expires_at:
+              type: number
+              format: int64
+              description: Timestamp when the token expires
+              example: 1712345678
+            user:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: User ID
+                  example: '12345'
+                full_name:
+                  type: string
+                  description: Full name of the authenticated user
+                  example: John Doe
+                email:
+                  type: string
+                  description: Email of the authenticated user
+                  example: john_doe@example.com
+                created_at:
+                  type: number
+                  format: int64
+                  description: Timestamp when the user was created
+                  example: 1712345678
+                updated_at:
+                  type: number
+                  format: int64
+                  description: Timestamp when the user was last updated
+                  example: 1712345678
+      x-stoplight:
+        id: tcyl8b53x5r2c
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - bearerAuth: []
