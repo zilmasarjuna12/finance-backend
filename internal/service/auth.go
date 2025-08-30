@@ -31,10 +31,25 @@ func (s *authService) Register(ctx context.Context, fullname, email, password st
 
 	tx := s.db.Begin()
 
+	existingUser, err := s.userRepo.GetByEmail(tx, ctx, email)
+	if err != nil {
+		log.WithError(err).Error("[service - Register]: Error checking for existing user")
+
+		tx.Rollback()
+		return nil, nil, err
+	}
+
+	if existingUser != nil {
+		log.Infof("[service - Register]: User with email %s already exists", email)
+
+		tx.Rollback()
+		return nil, nil, errors.New("user already exists")
+	}
+
 	// Hash password
 	hashedPassword, err := auth.HashPassword(password)
 	if err != nil {
-		log.WithError(err).Error("[service]: Error hashing password")
+		log.WithError(err).Error("[service - Register]: Error hashing password")
 		return nil, nil, err
 	}
 
@@ -45,7 +60,7 @@ func (s *authService) Register(ctx context.Context, fullname, email, password st
 	}
 
 	if err := s.userRepo.Create(tx, ctx, user); err != nil {
-		log.WithError(err).Error("[service]: Failed to create user")
+		log.WithError(err).Error("[service - Register]: Failed to create user")
 
 		tx.Rollback()
 		return nil, nil, err
@@ -53,7 +68,7 @@ func (s *authService) Register(ctx context.Context, fullname, email, password st
 
 	token, expiresAt, err := auth.GenerateToken(user.ID.String(), user.Email)
 	if err != nil {
-		log.WithError(err).Error("[service]: Failed to generate token")
+		log.WithError(err).Error("[service - Register]: Failed to generate token")
 
 		tx.Rollback()
 		return nil, nil, err
@@ -67,14 +82,14 @@ func (s *authService) Register(ctx context.Context, fullname, email, password st
 	}
 
 	if err := s.sessionRepo.Create(tx, ctx, session); err != nil {
-		log.WithError(err).Error("[service]: Failed to create session")
+		log.WithError(err).Error("[service - Register]: Failed to create session")
 
 		tx.Rollback()
 		return nil, nil, err
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		log.WithError(err).Error("[service]: Failed to commit transaction")
+		log.WithError(err).Error("[service - Register]: Failed to commit transaction")
 		return nil, nil, errors.New("internal server error")
 	}
 
@@ -87,21 +102,21 @@ func (s *authService) Login(ctx context.Context, email, password string) (*domai
 	user, err := s.userRepo.GetByEmail(s.db, ctx, email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Infof("[service]: No user found with email %s", email)
+			log.Infof("[service - Login]: No user found with email %s", email)
 			return nil, nil, errors.New("invalid email or password")
 		}
-		log.WithError(err).Error("[service]: Error fetching user by email")
+		log.WithError(err).Error("[service - Login]: Error fetching user by email")
 		return nil, nil, errors.New("internal server error")
 	}
 
 	if !auth.CheckPassword(password, user.Password) {
-		log.Infof("[service]: Invalid password for email %s", email)
+		log.Infof("[service - Login]: Invalid password for email %s", email)
 		return nil, nil, errors.New("invalid email or password")
 	}
 
 	token, expiresAt, err := auth.GenerateToken(user.ID.String(), user.Email)
 	if err != nil {
-		log.WithError(err).Error("[service]: Error generating token")
+		log.WithError(err).Error("[service - Login]: Error generating token")
 		return nil, nil, errors.New("internal server error")
 	}
 
@@ -113,9 +128,35 @@ func (s *authService) Login(ctx context.Context, email, password string) (*domai
 	}
 
 	if err := s.sessionRepo.Create(s.db, ctx, session); err != nil {
-		log.WithError(err).Error("[service]: Error creating session")
+		log.WithError(err).Error("[service - Login]: Error creating session")
 		return nil, nil, err
 	}
 
 	return user, session, nil
+}
+
+func (s *authService) GetUserByToken(ctx context.Context, token string) (*domain.User, error) {
+	log := logger.WithRequestID(ctx)
+
+	session, err := s.sessionRepo.GetByToken(s.db, ctx, token)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Infof("[service - GetUserByToken]: No session found with token %s", token)
+			return nil, errors.New("invalid token")
+		}
+		log.WithError(err).Error("[service - GetUserByToken]: Error fetching session by token")
+		return nil, errors.New("internal server error")
+	}
+
+	user, err := s.userRepo.GetByEmail(s.db, ctx, session.User.Email)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Infof("[service - GetUserByToken]: No user found with ID %s", session.UserID)
+			return nil, errors.New("user not found")
+		}
+		log.WithError(err).Error("[service - GetUserByToken]: Error fetching user by ID")
+		return nil, errors.New("internal server error")
+	}
+
+	return user, nil
 }

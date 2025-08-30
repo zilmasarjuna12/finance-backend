@@ -19,6 +19,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	authService := service.NewAuthService(db, userRepository, sessionRepository)
 
 	authHandler := handler.NewAuthHandler(authService)
+	profileHandler := handler.NewProfileHandler(authService)
 
 	app.Use(middleware.RequestIDMiddleware())
 	app.Use(middleware.LoggingMiddleware())
@@ -31,8 +32,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	v1.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
 			"success":   true,
-			"status":    "ok",
-			"message":   "Finance API is running",
+			"message":   "success",
 			"timestamp": time.Now().Format(time.RFC3339),
 		})
 	})
@@ -40,4 +40,8 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	// Additional routes can be added here
 	v1.Post("/auth/register", authHandler.Register)
 	v1.Post("/auth/login", authHandler.Login)
+
+	protected := v1.Group("/", middleware.AuthMiddleware(authService))
+
+	protected.Get("/profile", profileHandler.GetProfile)
 }

@@ -38,6 +38,7 @@ type UserRepository interface {
 type AuthService interface {
 	Register(ctx context.Context, fullname, email, password string) (*User, *Session, error)
 	Login(ctx context.Context, email, password string) (*User, *Session, error)
+	GetUserByToken(ctx context.Context, token string) (*User, error)
 }
 
 type SessionRepository interface {
