@@ -15,11 +15,20 @@ import (
 func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	userRepository := repository.NewUserRepository()
 	sessionRepository := repository.NewSessionRepository()
+	walletRepository := repository.NewWalletRepository()
+	budgetRepository := repository.NewBudgetRepository()
+	transactionRepository := repository.NewTransactionRepository()
 
 	authService := service.NewAuthService(db, userRepository, sessionRepository)
+	walletService := service.NewWalletService(db, walletRepository)
+	budgetService := service.NewBudgetService(db, budgetRepository)
+	transactionService := service.NewTransactionService(db, transactionRepository, walletRepository)
 
 	authHandler := handler.NewAuthHandler(authService)
 	profileHandler := handler.NewProfileHandler(authService)
+	walletHandler := handler.NewWalletHandler(walletService)
+	budgetHandler := handler.NewBudgetHandler(budgetService)
+	transactionHandler := handler.NewTransactionHandler(transactionService)
 
 	app.Use(middleware.RequestIDMiddleware())
 	app.Use(middleware.LoggingMiddleware())
@@ -44,4 +53,13 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	protected := v1.Group("/", middleware.AuthMiddleware(authService))
 
 	protected.Get("/profile", profileHandler.GetProfile)
+
+	protected.Get("/wallet", walletHandler.GetList)
+	protected.Post("/wallet", walletHandler.Create)
+
+	protected.Get("/budget", budgetHandler.GetList)
+	protected.Post("/budget", budgetHandler.Create)
+
+	protected.Post("/transaction", transactionHandler.Create)
+	protected.Get("/transaction", transactionHandler.GetList)
 }

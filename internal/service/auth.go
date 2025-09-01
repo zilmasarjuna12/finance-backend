@@ -33,10 +33,11 @@ func (s *authService) Register(ctx context.Context, fullname, email, password st
 
 	existingUser, err := s.userRepo.GetByEmail(tx, ctx, email)
 	if err != nil {
-		log.WithError(err).Error("[service - Register]: Error checking for existing user")
-
-		tx.Rollback()
-		return nil, nil, err
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			log.WithError(err).Error("[service - Register]: Error checking existing user")
+			tx.Rollback()
+			return nil, nil, err
+		}
 	}
 
 	if existingUser != nil {

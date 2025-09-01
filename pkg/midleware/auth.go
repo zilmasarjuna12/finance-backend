@@ -43,7 +43,7 @@ func AuthMiddleware(authService domain.AuthService) fiber.Handler {
 			})
 		}
 
-		c.Locals("user", user)
+		c.Locals("userId", user.ID.String())
 		c.Locals("token", token)
 
 		log.WithField("user_id", user.ID).Debug("[middleware - Auth]: User authenticated successfully")
